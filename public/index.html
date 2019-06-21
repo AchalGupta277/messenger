@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<head>
+    <title>Chat App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+</head>
+<body>
+    <h1>Hello there</h1>
+
+
+    <script>
+        var socket=io.connect("localhost:4000");
+        socket.on('user joined',() => console.log("User joined"));
+    </script>
+</body>
