@@ -7,7 +7,6 @@ var server=app.listen(process.env.port || 4000,function(){
     console.log("App is running");
 });
 
-
 app.use(express.static("public"));
 
 var globalSocket;
@@ -19,6 +18,10 @@ io.on("connection",function(socket){
 app.get('/api/thread',function(req,res){
     
     let threadId=req.query.id;
+    let name=req.query.name;
+    if(name==''){
+        name='Anonymous';
+    }
 
     globalSocket.join(threadId,function(){
         console.log(`user joined in room ${threadId}`);
@@ -29,5 +32,9 @@ app.get('/api/thread',function(req,res){
     globalSocket.on('hit',function(data){
         globalSocket.to(threadId).emit('hit',{message:`socket hit`}); 
     });
+
+    globalSocket.on('message',function(data){
+        globalSocket.to(threadId).emit('message',{message:data.text,name});
+    })
     res.send(`Running ${threadId}`);
 });

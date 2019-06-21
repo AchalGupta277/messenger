@@ -7,28 +7,55 @@
     crossorigin="anonymous"></script>
 </head>
 <body>
-    <h1>Hello there</h1>
+    <h1>Private Messaging</h1>
 
+    <div id="join-room-wrapper">
+        
+        <h3>Enter your name and click on a room to join</h3>
+            <div style="margin: 10px"><input type="text" id="name"></div>
+            <button onclick="joinRoom(1)">Room 1</button>
+            <button onclick="joinRoom(2)">Room 2</button>
+            <button onclick="joinRoom(3)">Room 3</button>
+    </div>
+    <div id="message-wrapper" style="display: none">
+            <h3 id="room-div">Room </h3>
+        <div id="message-box"></div>
+        <input type="text" style="width: 1000px;height: 50px;" id="chat-input">
+        <button onclick="sendMessage()">Send</button>
+    </div>
 
     <script>
         var socket=io.connect("localhost:4000");
         socket.on('user joined',(data) => console.log("User joined",data));
         socket.on('hit',(data) => console.log("hit occured",data));
+        socket.on('message',(data) => {
+            console.log("hit occured",data);
+            $('#message-box').append(`<div>${data.name}: ${data.message} </div>`);
+        });
 
-        $(document).ready(function(){
-            console.log("Jquery is running");
-            let hitUrl="http://localhost:4000/api/thread";
-            if(Math.random()>0.5){
-                hitUrl=hitUrl+'?id=1';
-            }else{
-                hitUrl=hitUrl+'?id=2';
-            }
+        function sendMessage(){
+            let text=$('#chat-input').val();
+            socket.emit('message',{text});
+        }
+
+        function joinRoom(roomId){
+            $('#room-div').text(`Room ${roomId}`);
+
+            let name=$('#name').val();
+            let hitUrl=`http://localhost:4000/api/thread?id=${roomId}&name=${name}`;
             $.ajax({"method":"GET",
             "url":hitUrl,
             "success":function(res){
                 console.log("Response received");
+                $('#join-room-wrapper').hide();
+                $('#message-wrapper').show();
             }
             });
+        }
+
+        $(document).ready(function(){ 
+            console.log("Jquery is running");
+            
         });
     </script>
 </body>
