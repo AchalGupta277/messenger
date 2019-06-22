@@ -25,9 +25,11 @@
     </div>
 
     <script>
+        let name;
         var socket=io.connect("localhost:4000");
-        socket.on('user joined',(data) => console.log("User joined",data));
-        socket.on('hit',(data) => console.log("hit occured",data));
+
+        socket.on('user-joined',(data) => console.log("User joined",data));
+        
         socket.on('message',(data) => {
             console.log("hit occured",data);
             $('#message-box').append(`<div>${data.name}: ${data.message} </div>`);
@@ -35,18 +37,18 @@
 
         function sendMessage(){
             let text=$('#chat-input').val();
-            socket.emit('message',{text});
+            socket.emit('message',{text,name});
         }
 
         function joinRoom(roomId){
             $('#room-div').text(`Room ${roomId}`);
-
-            let name=$('#name').val();
+            name=$('#name').val();
             let hitUrl=`http://localhost:4000/api/thread?id=${roomId}&name=${name}`;
             $.ajax({"method":"GET",
             "url":hitUrl,
             "success":function(res){
                 console.log("Response received");
+                socket.emit('user-joined',{name,roomId});
                 $('#join-room-wrapper').hide();
                 $('#message-wrapper').show();
             }

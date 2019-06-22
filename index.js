@@ -9,32 +9,38 @@ var server=app.listen(process.env.port || 4000,function(){
 
 app.use(express.static("public"));
 
-var globalSocket;
 var io=socket(server);
+
+let userRoomMapping=[];
+
 io.on("connection",function(socket){
-    globalSocket=socket;
+    socket.on('user-joined',function(data){
+        let threadId=data.roomId;
+        let userName=data.name;
+        userRoomMapping[userName]=threadId;
+        console.log('user room',userRoomMapping);
+        socket.join(threadId,function(){
+            console.log(`user joined in room ${threadId}`);
+            socket.nsp.to(threadId).emit(`user joined in ${threadId}`);
+        });
+    });
+    socket.on('message',function(data){
+        userName=data.name;
+        let threadId=userRoomMapping[userName];
+
+        console.log('room',threadId,'user room',userRoomMapping);
+        if(threadId!= null){
+            socket.nsp.to(threadId).emit('message',{message:data.text,name:data.name});
+        }
+    })
 });
 
 app.get('/api/thread',function(req,res){
-    
     let threadId=req.query.id;
     let name=req.query.name;
     if(name==''){
         name='Anonymous';
     }
-
-    globalSocket.join(threadId,function(){
-        console.log(`user joined in room ${threadId}`);
-        io.to(threadId).emit(`user joined in ${threadId}`);
-    });
-    globalSocket.to(threadId).emit(`user joined`,{message:`in ${threadId}`});
-
-    globalSocket.on('hit',function(data){
-        globalSocket.to(threadId).emit('hit',{message:`socket hit`}); 
-    });
-
-    globalSocket.on('message',function(data){
-        globalSocket.to(threadId).emit('message',{message:data.text,name});
-    })
+    userName=name;
     res.send(`Running ${threadId}`);
 });
